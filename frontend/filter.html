@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Category Product Filter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: rgb(255, 255, 255);
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+    }
+    select, .product-list {
+      width: 100%;
+      margin: 20px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .product-item {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 4px;
+    }
+    .product-item h4 {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Product Categories</h2>
+
+    <!-- Category Dropdown -->
+    <select id="categorySelect">
+      <option value="">Select a Category</option>
+    </select>
+
+    <!-- Products List -->
+    <div id="productList" class="product-list">
+      <p>Select a category to view products.</p>
+    </div>
+  </div>
+
+  <script>
+    fetch('http://localhost:3000/products/categories') 
+      .then(res => res.json())
+      .then(categories => {
+        const categorySelect = document.getElementById('categorySelect');
+        categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category.id;
+          option.textContent = category.name;
+          categorySelect.appendChild(option);
+        });
+      });
+
+    document.getElementById('categorySelect').addEventListener('change', function() {
+      const categoryId = this.value;
+      const productList = document.getElementById('productList');
+
+      if (!categoryId) {
+        productList.innerHTML = '<p>Select a category to view products.</p>';
+        return;
+      }
+
+      fetch(`http://localhost:3000/products/categories/${categoryId}`)  // Your API endpoint for filtering by category
+        .then(res => res.json())
+        .then(products => {
+          productList.innerHTML = '';
+          if (products.length === 0) {
+            productList.innerHTML = '<p>No products found in this category.</p>';
+          } else {
+            products.forEach(product => {
+              const productItem = document.createElement('div');
+              productItem.classList.add('product-item');
+              productItem.innerHTML = `
+                <h4>${product.name}</h4>
+                <p>Price: $${product.price}</p>
+                <p>${product.description}</p>
+              `;
+              productList.appendChild(productItem);
+            });
+          }
+        });
+    });
+  </script>
+</body>
+</html>

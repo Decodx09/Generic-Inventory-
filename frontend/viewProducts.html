@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Products</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      color: #000;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .product {
+      border: 2px solid #000;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      background-color: lightblue;
+    }
+
+    .product-info {
+      font-weight: bold;
+      height : 20px;
+      width : 20%;
+    }
+
+    .delete-btn {
+      background: #fff;
+      color: #000;
+      border: 2px solid #000;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .delete-btn:hover {
+      background: #000;
+      color: #fff;
+    }
+
+    .name{
+      height : 100px;
+      background-color: lightgray;
+    }
+  </style>
+
+  <style>
+    .search-box {
+      width: 500px;
+      padding: 10px;
+      /* margin-bottom: 15px; */
+      border: 2px solid #000;
+      border : none;
+      /* border-radius: 4px; */
+      background-color: white;
+      border-left: 2px solid #000;
+      border-top: 2px solid #000;
+      border-bottom: 2px solid #000;
+
+    }
+
+    .search-button{
+      padding: 10px 16px;
+      background-color: rgb(255, 255, 255);
+      color: black;
+      border-width: 2px black;
+      border : 2px solid;
+      cursor: pointer;
+      /* margin-bottom : 15px; */
+    }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: none;
+    z-index: 9999;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+  .modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    border: 2px solid black;
+    width: 350px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+  </style>
+</head>
+<body>
+  <style>
+    .heading{
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: bolder;
+      font-size : 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin-bottom : 0px;
+      /* background-color: lightblue; */
+      position: absolute;
+      left : 5rem;
+      top : 1rem;
+      
+    }
+
+    .top-bar{
+      height : 50px;
+      width : 100%;
+      background-color: rgb(255, 255, 255);
+      position: relative;
+      border-bottom: 2px solid #000;
+      left : 0;
+      top : 0;
+      /* overflow: hidden; */
+    }
+
+
+    .search-box-main{
+      width: 100%;
+      display: flex;
+      flex-direction: center;
+      align-items: center;
+      margin-top: 100px;
+      position : relative;
+      top : -5rem;
+      left : 0rem;
+      /* background-color: rgb(238, 238, 238); */
+      height : 100px;
+      border-width: 2px black;
+    }
+
+    .productlist-1{
+      margin-top : 50px;
+    }
+  </style>
+  <h1 class="heading">Inventory</h1>
+
+  <div class="top-bar">
+    <div class="search-box-main">
+      <input class="search-box" type="text" id="searchInput" placeholder="" />
+      <button class="search-button" onclick="search()">Search</button>
+  </div>
+
+
+  </div>
+    <div class="productlist-1" id="productList">
+    <div class="productlist" id="searchResults"></div>
+  </div>
+
+  <div id="editModal" class="modal">
+    <form id="editForm" class="modal-content">
+      <h3>Edit Product</h3>
+      
+      <label>Name:<br>
+        <input type="text" name="name" required>
+      </label><br><br>
+
+      <label>Description:<br>
+        <input type="text" name="description" required>
+      </label><br><br>
+
+      <label>Price:<br>
+        <input type="number" step="0.01" name="price" required>
+      </label><br><br>
+
+      <label>Stock:<br>
+        <input type="number" name="stock" required>
+      </label><br><br>
+
+      <label>Category:<br>
+        <input type="text" name="category" required>
+      </label><br><br>
+
+      <div style="display: flex; justify-content: space-around;">
+        <button type="submit">💾 Save</button>
+        <button type="button" onclick="closeEditModal()">❌ Cancel</button>
+      </div>
+    </form>
+  </div>
+
+
+<script>
+    async function search() {
+      const query = document.getElementById('searchInput').value.trim();
+      const resultsContainer = document.getElementById('searchResults');
+      resultsContainer.innerHTML = ''; // Clear previous results
+
+      if (!query) {
+        alert("Please enter something to search.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:3000/search?query=${encodeURIComponent(query)}`);
+        const results = await response.json();
+
+        if (results.length === 0) {
+          resultsContainer.innerHTML = '<p>No products found.</p>';
+          return;
+        }
+
+        results.forEach(product => {
+          const div = document.createElement('div');
+          div.classList.add('search-result-item');
+          div.style.border = '2px solid #000';
+          div.style.padding = '12px';
+          div.style.borderRadius = '6px';
+          div.style.marginBottom = '12px';
+          div.style.backgroundColor = '#f3f3f3';
+
+          div.innerHTML = `
+            <h3>${product.name}</h3>
+            <p>${product.description}</p>
+            <p><strong>Price:</strong> ₹${product.price}</p>
+            <p><strong>Stock:</strong> ${product.stock}</p>
+            <p><strong>Category:</strong> ${product.category}</p>
+          `;
+          resultsContainer.appendChild(div);
+        });
+      } catch (err) {
+        console.error('Search failed:', err);
+        alert('Something went wrong while searching.');
+      }
+    }
+
+  let currentEditingProductId = null;
+
+  async function editProduct(id) {
+    try {
+      const response = await fetch(`http://localhost:3000/products/${id}`);
+      const product = await response.json();
+
+      // Populate the form
+      const form = document.getElementById('editForm');
+      form.name.value = product.name;
+      form.description.value = product.description;
+      form.price.value = product.price;
+      form.stock.value = product.stock;
+
+      currentEditingProductId = id;
+      document.getElementById('editModal').style.display = 'flex';
+    } catch (err) {
+      console.error('Failed to fetch product:', err);
+      alert('Could not load product details.');
+    }
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+    currentEditingProductId = null;
+  }
+
+  document.getElementById('editForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const updated = {
+      name: this.name.value,
+      description: this.description.value,
+      price: parseFloat(this.price.value),
+      stock: parseInt(this.stock.value),
+      category: this.category.value
+    };
+
+    try {
+      const res = await fetch(`http://localhost:3000/products/${currentEditingProductId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+
+      const data = await res.json();
+      alert(data.message || 'Product updated successfully!');
+      closeEditModal();
+      location.reload();
+    } catch (err) {
+      console.error('Update failed:', err);
+      alert('Failed to update product.');
+    }
+  });
+
+
+
+    async function fetchProducts() {
+      const res = await fetch('http://localhost:3000/products');
+      const products = await res.json();
+      const container = document.getElementById('productList');
+
+      products.forEach(product => {
+        const div = document.createElement('div');
+        div.className = 'one';
+        div.innerHTML = `
+        <div class="two">${product.name}</div>
+        <div class="three">${product.stock}</div>
+        <div class="four">${product.category}</div>
+        <button class="edit" onclick="editProduct(${product.id})"">Edit</button>
+        <button class="delete" onclick="deleteProduct(${product.id})">Delete</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    let deleteProductId = null;
+
+    function deleteProduct(id) {
+      deleteProductId = id;
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+      deleteProductId = null;
+    }
+
+    async function confirmDelete() {
+      try {
+        const res = await fetch(`http://localhost:3000/products/${deleteProductId}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+        closeModal();
+        location.reload();
+      } catch (err) {
+        console.error('Delete failed:', err);
+        alert('Something went wrong.');
+      }
+    }
+    fetchProducts();
+  </script>
+
+<style>
+  .product-heading{
+    /* height : 25px; */
+    /* width : 100px; */
+    /* background-color: lightgray; */
+    /* display: flex; */
+    /* flex-direction: column; */
+    /* justify-content: center; */
+    /* align-items: center; */
+    margin-top : 100px;
+  }
+
+  .one{
+    height : 80px;
+    width : 600px;
+    border-radius: 10px;
+    border-width: 100px;
+    border: 2px solid #000;
+    /* background-color: lightblue; */
+    display : flex;
+    flex-direction : row;
+    justify-content : space-between;
+    align-items: center;
+    overflow: hidden;
+    margin-top : 10px;
+  }
+
+  .two{
+    height : 100px;
+    width : 150px;
+    /* background-color: lightcoral; */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    margin-left : 10px;
+  }
+
+  .three{
+    height : 100px;
+    width : 150px;
+    /* background-color: lightgreen; */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .four{
+    height : 100px;
+    width : 150px;
+    /* background-color: lightyellow; */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .delete{
+    background: #fff;
+    color: #000;
+    border: 2px solid #000;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-right : 15px;
+  }
+
+  .edit{
+    background: #fff;
+    color: #000;
+    border: 2px solid #000;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+</style>
+
+<!-- <div class="one">
+  <div class="two">snsf</div>
+  <div class="three"></div>
+  <div class="four"></div>
+  <button class="delete">Delete</button>
+</div> -->
+
+<style>
+  .filter{
+    height : 400px;
+    width : 250px;
+    background-color: rgb(232, 232, 232);
+    display : flex;
+    flex-direction : row;
+    justify-content : center;
+    align-items: center;
+    position: absolute;
+    top : 10.5rem;
+    left : 0;
+  }
+
+  .category-heading{
+    width: 100px;
+    display: flex;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bolder;
+    font-size : 20px;
+    flex-direction: column;
+    justify-content: left;
+    align-items: left;
+    margin-bottom : 0px;
+    /* background-color: lightblue; */
+  }
+
+  .category {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+
+  .category-btn {
+    padding: 8px 50px;
+    background-color: #ffffff;
+    border: 2px solid #000;
+    /* border-radius: 8px; */
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    text-align: left;
+    /* background-color: lightblue; */
+    margin-left : 0px;
+  }
+
+  .category-btn:hover {
+    /* background-color: #dedede; */
+    color: #676767;
+  }
+
+  .category-heading{
+    text-align : left;
+  }
+</style>
+
+<!-- <div class="filter">
+  <div class="category-heading">
+    <div class="category"></div>
+  </div>
+</div> -->
+
+<script>
+  async function loadCategories() {
+    try {
+      const res = await fetch('http://localhost:3000/products/categories'); // Adjust if your route is different
+      const categories = await res.json();
+
+      const categoryContainer = document.querySelector('.category-material');
+      categoryContainer.innerHTML = ''; // Clear if there's anything preloaded
+
+      categories.forEach(cat => {
+        const btn = document.createElement('p');
+        btn.textContent = cat.name; // Adjust `cat.name` based on your DB schema
+        btn.classList.add('category-btn');
+
+        // Optionally, you can add click handler
+        btn.addEventListener('click', () => {
+          console.log(`Clicked on category: ${cat.name}`);
+          // You can now trigger category-based filtering here
+        });
+
+        categoryContainer.appendChild(btn);
+      });
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    }
+  }
+
+  // Call the function when DOM is ready
+  document.addEventListener('DOMContentLoaded', loadCategories);
+</script>
+
+<style>
+  .category-one{
+    height : 100%;
+    width : 300px;
+    display : flex;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    left : 0;
+    top : 0rem;
+    /* background-color: lightblue; */
+    border-right: #000 solid 2px;
+  }
+  
+  .category-two{
+    height : 400px;
+    width : 100px;
+    /* background-color: rgb(156, 181, 189); */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .category-material{
+    margin-top : 20px;
+  }
+</style>
+
+<div class="category-one">
+  <div class="category-two">
+    <div class="category-heading">Categories</div>
+    <div class="category-material"></div>
+  </div>
+</div>
+
+<style>
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background-color: white;
+    padding: 24px 32px;
+    border: 2px solid #000;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 400px;
+  }
+
+  .modal-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .confirm-delete-btn,
+  .cancel-btn {
+    padding: 8px 16px;
+    border: 2px solid #000;
+    background-color: white;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .confirm-delete-btn:hover {
+    background-color: red;
+    color: white;
+  }
+
+  .cancel-btn:hover {
+    background-color: #000;
+    color: white;
+  }
+</style>
+
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <p>Are you sure you want to delete this product?</p>
+    <div class="modal-actions">
+      <button class="confirm-delete-btn" onclick="confirmDelete()">Yes, Delete</button>
+      <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
